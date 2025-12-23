@@ -86,6 +86,60 @@ def iniciar_entrenamiento():
     st.session_state.entrenando = True
 
 # Botón de Inicio
+# --- 5. CALCULADORA DE TIEMPOS (PREDICCIÓN) ---
+st.markdown("---")
+st.subheader("⏱️ Estimación de Tiempos")
+
+if len(rutina_final) > 0:
+    # Variables constantes (estimadas del código)
+    tiempo_calentamiento = 5 * 60  # 5 minutos aprox
+    tiempo_enfriamiento = 2 * 60   # 2 minutos aprox
+    
+    # Cálculo por Vuelta
+    num_ejercicios = len(rutina_final)
+    tiempo_por_ciclo_seg = num_ejercicios * (t_trabajo + t_descanso)
+    
+    # Cálculo Total
+    tiempo_total_seg = (tiempo_por_ciclo_seg * vueltas) + tiempo_calentamiento + tiempo_enfriamiento
+    
+    # Formateo para que se vea bonito (min:seg)
+    def seg_a_min(segundos):
+        mins = segundos // 60
+        return f"{mins} min"
+
+    # Mostrar métricas en columnas
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric(
+            label="Tiempo por Vuelta", 
+            value=seg_a_min(tiempo_por_ciclo_seg),
+            help="Suma de trabajo + descanso de todos los ejercicios de una vuelta."
+        )
+        
+    with col2:
+        st.metric(
+            label="Tiempo Total Estimado", 
+            value=seg_a_min(tiempo_total_seg),
+            delta=f"{vueltas} vueltas",
+            help="Incluye calentamiento, las vueltas y el enfriamiento."
+        )
+        
+    with col3:
+        st.metric(
+            label="Volumen Total",
+            value=f"{num_ejercicios * vueltas} series",
+            help="Total de ejercicios que realizarás."
+        )
+else:
+    st.warning("Selecciona ejercicios para calcular el tiempo.")
+
+st.markdown("---")
+
+# --- AQUÍ VA TU BOTÓN DE INICIO DE SIEMPRE ---
+# (Asegúrate de que este código siga después de lo de arriba)
+if st.button("▶️ INICIAR SISTEMA", on_click=iniciar_entrenamiento, type="primary"):
+    # ... resto del código ...
 if st.button("▶️ INICIAR SISTEMA", on_click=iniciar_entrenamiento, type="primary"):
     if len(rutina_final) == 0:
         st.error("No hay ejercicios seleccionados.")
@@ -149,3 +203,4 @@ if st.session_state.entrenando:
     
     # Reset del estado
     st.session_state.entrenando = False
+
