@@ -1,140 +1,128 @@
 import streamlit as st
-import pandas as pd
-from datetime import datetime, timedelta
+import time
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
-st.set_page_config(page_title="Ingeniería Corporal", layout="centered")
+st.set_page_config(page_title="Entrenador en Vivo", page_icon="⏱️")
 
-st.title("🏗️ Cronograma de Entrenamiento")
-st.markdown("### Planificación Estructural del Cuerpo")
+st.title("⏱️ Modo Entrenador: Tiempo Real")
+st.markdown("Presiona **INICIAR** y sigue las instrucciones en pantalla.")
 
-# --- BARRA LATERAL (CONTROLES) ---
-st.sidebar.header("Parámetros de Diseño")
-
-# Selector de hora de inicio
-hora_inicio_input = st.sidebar.time_input("Hora de Inicio", datetime.now())
-
-# Sliders para ajustar tiempos
-descanso_segundos = st.sidebar.slider("Tiempo de Descanso (seg)", 30, 180, 90, step=15)
-num_vueltas = st.sidebar.slider("Número de Vueltas (Circuitos)", 1, 5, 3)
-
-# Botón para mostrar guía visual
-mostrar_guia = st.sidebar.checkbox("Ver Guía de Ejercicios", value=True)
-
-# --- LÓGICA DEL CRONOGRAMA ---
-def generar_datos():
-    # Convertir el input de hora a un objeto datetime completo para poder sumar
-    now = datetime.now()
-    tiempo_actual = datetime.combine(now.date(), hora_inicio_input)
+# --- BARRA LATERAL (CONFIGURACIÓN) ---
+with st.sidebar:
+    st.header("⚙️ Ajustes del Motor")
+    tiempo_ejercicio = st.number_input("Duración Ejercicio (seg)", value=45, step=5)
+    tiempo_descanso = st.number_input("Duración Descanso (seg)", value=90, step=5)
+    num_vueltas = st.slider("Vueltas al Circuito", 1, 5, 3)
     
-    cronograma = []
+    st.info("💡 Tip: Sube el volumen de tu música. La pantalla te indicará cuándo cambiar.")
+
+# --- DEFINICIÓN DE LA RUTINA ---
+# Lista de tuplas: (Nombre, Tipo, Duración_Override o None)
+# Tipo: 'calentamiento', 'fuerza', 'descanso', 'enfriamiento'
+
+def crear_secuencia():
+    secuencia = []
     
-    # Duraciones estimadas (en segundos)
-    duracion_ejercicio = 45
-    transicion = 60
-    
-    # 1. CALENTAMIENTO
-    actividades_calentamiento = [
-        ("Movilidad Articular", 120),
-        ("Gato-Vaca (Columna)", 60),
-        ("Jumping Jacks (Tijeras)", 60),
-        ("Rotaciones (Cadera/Muñeca)", 60)
+    # 1. Calentamiento
+    calentamiento = [
+        ("Movilidad Articular", "calentamiento", 120),
+        ("Gato-Vaca", "calentamiento", 60),
+        ("Jumping Jacks", "calentamiento", 60)
     ]
+    secuencia.extend(calentamiento)
     
-    for nombre, duracion in actividades_calentamiento:
-        cronograma.append({
-            "Fase": "Calentamiento",
-            "Hora": tiempo_actual.strftime("%H:%M:%S"),
-            "Actividad": nombre,
-            "Duración": f"{duracion//60} min" if duracion >= 60 else f"{duracion} seg"
-        })
-        tiempo_actual += timedelta(seconds=duracion)
-
-    # Transición
-    tiempo_actual += timedelta(seconds=transicion)
-
-    # 2. CIRCUITO DE FUERZA
-    ejercicios_fuerza = [
-        ("Sentadillas", "12-15 reps"),
-        ("Lagartijas", "8-12 reps"),
-        ("Zancadas", "10-12/pierna"),
-        ("Superman", "15 reps"),
-        ("Plancha", "45 seg")
-    ]
+    # 2. Circuito Fuerza
+    ejercicios = ["Sentadillas", "Lagartijas", "Zancadas", "Superman (Espalda)", "Plancha"]
     
     for vuelta in range(1, num_vueltas + 1):
-        for nombre, detalle in ejercicios_fuerza:
-            # Ejercicio
-            cronograma.append({
-                "Fase": f"Circuito {vuelta}",
-                "Hora": tiempo_actual.strftime("%H:%M:%S"),
-                "Actividad": f"💪 {nombre}",
-                "Duración": detalle
-            })
-            tiempo_actual += timedelta(seconds=duracion_ejercicio)
+        for ejercicio in ejercicios:
+            # Fase de Esfuerzo
+            secuencia.append((f"{ejercicio} (Vuelta {vuelta})", "fuerza", tiempo_ejercicio))
+            # Fase de Descanso
+            secuencia.append((f"Descanso: Respira", "descanso", tiempo_descanso))
             
-            # Descanso
-            cronograma.append({
-                "Fase": f"Circuito {vuelta}",
-                "Hora": tiempo_actual.strftime("%H:%M:%S"),
-                "Actividad": "💤 Descanso (Recarga)",
-                "Duración": f"{descanso_segundos} seg"
-            })
-            tiempo_actual += timedelta(seconds=descanso_segundos)
-
-    # 3. ENFRIAMIENTO
-    tiempo_actual += timedelta(seconds=transicion)
-    cronograma.append({
-        "Fase": "Enfriamiento",
-        "Hora": tiempo_actual.strftime("%H:%M:%S"),
-        "Actividad": "🧘 Estiramientos",
-        "Duración": "5 min"
-    })
+    # 3. Enfriamiento
+    secuencia.append(("Estiramientos Finales", "enfriamiento", 300))
     
-    # Calcular fin
-    tiempo_final = tiempo_actual + timedelta(minutes=5)
+    return secuencia
+
+# --- LÓGICA DEL CRONÓMETRO ---
+# Usamos un botón para detonar el loop
+if st.button("▶️ INICIAR ENTRENAMIENTO", type="primary"):
     
-    return cronograma, tiempo_final
-
-# Generar datos
-data, hora_fin = generar_datos()
-df = pd.DataFrame(data)
-
-# --- MOSTRAR RESULTADOS ---
-
-# 1. Métricas Clave
-col1, col2, col3 = st.columns(3)
-col1.metric("Inicio", hora_inicio_input.strftime("%H:%M"))
-col2.metric("Fin Estimado", hora_fin.strftime("%H:%M"))
-col3.metric("Proteína Post-Entreno", "25-30g")
-
-# 2. Tabla del Cronograma
-st.subheader("📅 Tu Ruta Crítica de Hoy")
-# Usamos un estilo para resaltar los descansos
-def color_rows(row):
-    if "Descanso" in row["Actividad"]:
-        return ['background-color: #e0f7fa; color: black'] * len(row)
-    elif "Circuito" in row["Fase"]:
-        return ['background-color: #fff3e0; color: black'] * len(row)
-    return [''] * len(row)
-
-st.dataframe(df.style.apply(color_rows, axis=1), use_container_width=True)
-
-# --- SECCIÓN VISUAL (GUÍA) ---
-if mostrar_guia:
-    st.markdown("---")
-    st.subheader("📘 Guía Técnica de Ejercicios")
+    rutina = crear_secuencia()
+    total_pasos = len(rutina)
     
-    tab1, tab2 = st.tabs(["Gato-Vaca", "Tijeras (Jumping Jacks)"])
-    
-    with tab1:
-        st.markdown("**Objetivo:** Movilidad de columna.")
-        st.info("Inhala al arquear (mirada arriba), exhala al encorvar (mirada al ombligo).")
-        # Aquí podrías poner st.image("url_imagen") si la tienes
+    # Creamos CONTENEDORES VACÍOS que iremos llenando
+    # Esto evita que se dibuje una lista infinita hacia abajo
+    status_text = st.empty()
+    timer_display = st.empty()
+    progress_bar = st.progress(0)
+    info_box = st.empty()
+
+    # Bucle principal de la rutina
+    for i, (nombre, tipo, duracion) in enumerate(rutina):
         
-    with tab2:
-        st.markdown("**Objetivo:** Elevar ritmo cardíaco.")
-        st.info("Coordina: Abre piernas y brazos arriba al mismo tiempo. Cae sobre puntas de pies.")
+        # Definir colores e íconos según el tipo
+        if tipo == "fuerza":
+            icono = "🔥"
+            color_msg = "¡DALE DURO!"
+            info_msg = "Concéntrate en la técnica. Movimientos controlados."
+        elif tipo == "descanso":
+            icono = "💧"
+            color_msg = "RECUPERACIÓN"
+            info_msg = "Camina un poco, toma agua, sacude los músculos."
+        elif tipo == "calentamiento":
+            icono = "🌡️"
+            color_msg = "CALENTAMIENTO"
+            info_msg = "Movimientos suaves para lubricar articulaciones."
+        else:
+            icono = "🧘"
+            color_msg = "ENFRIAMIENTO"
+            info_msg = "Relaja el cuerpo, baja las pulsaciones."
 
-# Nota final
-st.caption("Generado con Python para optimización metabólica.")
+        # Actualizar el título de la actividad
+        status_text.markdown(f"### {icono} {nombre}")
+        info_box.info(info_msg)
+
+        # Cuenta Regresiva (El Loop dentro del Loop)
+        for segundos_restantes in range(duracion, 0, -1):
+            # Formato de minutos:segundos
+            mins, secs = divmod(segundos_restantes, 60)
+            tiempo_formato = '{:02d}:{:02d}'.format(mins, secs)
+            
+            # Mostrar el tiempo gigante
+            # Usamos HTML simple para hacerlo grande y centrado
+            timer_display.markdown(
+                f"""
+                <div style="text-align: center; font-size: 80px; font-weight: bold; color: #333;">
+                    {tiempo_formato}
+                </div>
+                <div style="text-align: center; font-size: 20px; color: gray;">
+                    {color_msg}
+                </div>
+                """, 
+                unsafe_allow_html=True
+            )
+            
+            # Actualizar barra de progreso del ejercicio actual
+            progreso = (duracion - segundos_restantes) / duracion
+            progress_bar.progress(progreso)
+            
+            # Esperar 1 segundo real
+            time.sleep(1)
+        
+        # Pequeña pausa visual al terminar un bloque
+        time.sleep(0.5)
+
+    # --- FIN DE LA RUTINA ---
+    status_text.empty()
+    timer_display.markdown(
+        """
+        <div style="text-align: center; font-size: 50px; color: green;">
+            ✅ ¡ENTRENAMIENTO COMPLETADO!
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
+    st.balloons()
