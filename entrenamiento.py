@@ -2,7 +2,7 @@ import streamlit as st
 import time
 
 # --- 1. CONFIGURACIÓN Y BASE DE DATOS ---
-st.set_page_config(page_title="Entrenador Pro 3.1", page_icon="🔥")
+st.set_page_config(page_title="Entrenador Pro 3.2", page_icon="🔥")
 
 # Diccionario de ejercicios
 DB_EJERCICIOS = {
@@ -116,30 +116,46 @@ if st.button("▶️ INICIAR SISTEMA", on_click=iniciar, type="primary"):
 
 if st.session_state.entrenando:
     
-    # Placeholders
-    header_ph = st.empty()
-    timer_ph = st.empty()
-    bar_ph = st.progress(0)
-    info_ph = st.empty()
+    # CREACIÓN DE CONTENEDORES (Pantallas dinámicas)
+    titulo_dinamico = st.empty()
+    reloj_dinamico = st.empty()
+    barra_progreso = st.progress(0)
+    info_dinamica = st.empty()
     
     # --- FASE 1: CALENTAMIENTO GUIADO ---
-    header_ph.markdown("### 🌡️ FASE 1: CALENTAMIENTO")
-    info_ph.info("Preparamos el sistema. Movimientos suaves.")
+    titulo_dinamico.markdown("### 🌡️ FASE 1: CALENTAMIENTO")
+    info_dinamica.info("Preparamos el sistema. Movimientos suaves.")
     
     # Conteo regresivo inicial
     for i in range(5, 0, -1):
-        timer_ph.markdown(f"<h1 style='text-align: center; color: gray;'>Inicio en: {i}</h1>", unsafe_allow_html=True)
+        reloj_dinamico.markdown(f"<h1 style='text-align: center; color: gray;'>Inicio en: {i}</h1>", unsafe_allow_html=True)
         time.sleep(1)
 
     # Bucle de Ejercicios de Calentamiento
     for nombre, duracion in RUTINA_CALENTAMIENTO:
-        header_ph.markdown(f"### 🌡️ Calentamiento: {nombre}")
+        titulo_dinamico.markdown(f"### 🌡️ Calentamiento: {nombre}")
         
-        # AQUÍ ESTABA EL ERROR: Asegúrate de copiar toda esta línea
         for t in range(duracion, 0, -1):
             mins, secs = divmod(t, 60)
-            timer_ph.markdown(
+            reloj_dinamico.markdown(
                 f"<h1 style='text-align: center; font-size: 80px; color: #FF9800;'>{mins:02d}:{secs:02d}</h1>", 
                 unsafe_allow_html=True
             )
-            bar
+            barra_progreso.progress((duracion - t) / duracion)
+            time.sleep(1)
+            
+    titulo_dinamico.markdown("### ✅ Calentamiento Terminado")
+    info_dinamica.success("¡Cuerpo listo! Empezamos el circuito principal en 5 segundos...")
+    time.sleep(5)
+
+    # --- FASE 2: BUCLE PRINCIPAL (FUERZA) ---
+    total_ejercicios = len(rutina_final) * vueltas
+    contador = 0
+    
+    for v in range(1, vueltas + 1):
+        for ejercicio in rutina_final:
+            contador += 1
+            
+            # TRABAJO
+            titulo_dinamico.markdown(f"### ⚔️ Vuelta {v}/{vueltas}: {ejercicio}")
+            info
