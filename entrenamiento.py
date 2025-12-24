@@ -2,7 +2,7 @@ import streamlit as st
 import time
 
 # --- 1. CONFIGURACIÓN Y BASE DE DATOS ---
-st.set_page_config(page_title="Entrenador Pro 3.0", page_icon="🔥")
+st.set_page_config(page_title="Entrenador Pro 3.1", page_icon="🔥")
 
 # Diccionario de ejercicios
 DB_EJERCICIOS = {
@@ -52,7 +52,7 @@ with st.sidebar:
 # --- 3. LÓGICA DE SELECCIÓN DE EJERCICIOS ---
 rutina_final = []
 
-st.title("🔥 Sistema de Entrenamiento Inteligente")
+st.title("🔥 Sistema de Entrenamiento")
 
 if modo == "⚡ Rutina Rápida (Full Body)":
     st.info("Rutina equilibrada pre-diseñada para cuerpo completo.")
@@ -135,4 +135,11 @@ if st.session_state.entrenando:
     for nombre, duracion in RUTINA_CALENTAMIENTO:
         header_ph.markdown(f"### 🌡️ Calentamiento: {nombre}")
         
-        for t in range(duracion,
+        # AQUÍ ESTABA EL ERROR: Asegúrate de copiar toda esta línea
+        for t in range(duracion, 0, -1):
+            mins, secs = divmod(t, 60)
+            timer_ph.markdown(
+                f"<h1 style='text-align: center; font-size: 80px; color: #FF9800;'>{mins:02d}:{secs:02d}</h1>", 
+                unsafe_allow_html=True
+            )
+            bar
